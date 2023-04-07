@@ -13,6 +13,10 @@ add_subdirectory(src)
 # Add source to this project's executable.
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# add_subdirectory(lib)
+add_subdirectory(lib)
 
 # target_link_libraries(${PROJECT_NAME} PUBLIC )
+
+ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                 COMMAND ${CMAKE_COMMAND} -E create_symlink
+                 ${CMAKE_SOURCE_DIR}/images $<TARGET_FILE_DIR:${PROJECT_NAME}>/images)

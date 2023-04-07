@@ -35,7 +35,7 @@ color ray_color(const ray& r) {
 int main() {
     // Image
     const float aspect_ratio = 16.0f / 9.0f;
-    const int image_width = 400;
+    const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
 
     std::ofstream file("images/image.ppm");

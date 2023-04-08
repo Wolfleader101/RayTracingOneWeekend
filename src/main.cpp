@@ -1,9 +1,11 @@
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
+#include "HittableList.hpp"
 #include "color.hpp"
-#include "ray.hpp"
-#include "vec3.hpp"
+#include "common.hpp"
+#include "sphere.hpp"
 
 float hit_sphere(const point3& centre, float radius, const ray& r) {
     vec3 oc = r.origin() - centre;
@@ -19,16 +21,13 @@ float hit_sphere(const point3& centre, float radius, const ray& r) {
     }
 }
 
-color ray_color(const ray& r) {
-    auto t = hit_sphere(point3(0, 0, -1), 0.5, r);
-
-    if (t > 0.0f) {
-        vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
-        return 0.5f * color(N.x() + 1, N.y() + 1, N.z() + 1);
+color ray_color(const ray& r, const Hittable& world) {
+    hit_record rec;
+    if (world.Hit(r, 0, INFIN, rec)) {
+        return 0.5 * (rec.normal + color(1, 1, 1));
     }
-
     vec3 unit_direction = unit_vector(r.direction());
-    t = 0.5f * (unit_direction.y() + 1.0f);
+    auto t = 0.5f * (unit_direction.y() + 1.0f);
     return (1.0f - t) * color(1.0f, 1.0f, 1.0f) + t * color(0.5f, 0.7f, 1.0f);
 }
 
@@ -39,6 +38,12 @@ int main() {
     const int image_height = static_cast<int>(image_width / aspect_ratio);
 
     std::ofstream file("images/image.ppm");
+    std::stringstream ss;
+
+    // World
+    HittableList world;
+    world.Add(std::make_shared<Sphere>(point3(0, 0, -1), 0.5));
+    world.Add(std::make_shared<Sphere>(point3(0, -100.5, -1), 100));
 
     // Camera
     float viewport_height = 2.0f;
@@ -61,11 +66,13 @@ int main() {
 
             ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
 
-            color pixel_color = ray_color(r);
+            color pixel_color = ray_color(r, world);
 
-            write_color(file, pixel_color);
+            write_color(ss, pixel_color);
         }
     }
+
+    file << ss.str();
     file.close();
     std::cout << std::endl << "Done!" << std::endl;
 }

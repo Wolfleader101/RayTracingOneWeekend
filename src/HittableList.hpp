@@ -5,7 +5,7 @@
 
 #include "hittable.hpp"
 
-class HittableList : Hittable {
+class HittableList : public Hittable {
    public:
     HittableList(){};
     HittableList(std::shared_ptr<Hittable> object);
@@ -13,8 +13,8 @@ class HittableList : Hittable {
     void Clear();
     void Add(std::shared_ptr<Hittable> object);
 
-    virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) override;
+    virtual bool Hit(const ray& r, float t_min, float t_max, hit_record& rec) const override;
 
-      private:
+   private:
     std::vector<std::shared_ptr<Hittable>> objects;
 };

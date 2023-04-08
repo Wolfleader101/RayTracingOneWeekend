@@ -1,5 +1,6 @@
 SET(SOURCES
 src/main.cpp
+src/common.hpp
 src/vec3.hpp
 src/color.hpp
 src/ray.hpp

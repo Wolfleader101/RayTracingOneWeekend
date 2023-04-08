@@ -10,4 +10,7 @@ src/sphere.cpp
 
 src/HittableList.hpp
 src/HittableList.cpp
+
+src/Camera.hpp
+src/Camera.cpp
 PARENT_SCOPE)

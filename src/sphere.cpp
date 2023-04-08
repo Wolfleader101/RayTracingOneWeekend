@@ -5,7 +5,7 @@ Sphere::Sphere(point3 cen, float r) {
     radius = r;
 }
 
-bool Sphere::Hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
+bool Sphere::Hit(const Ray& r, float t_min, float t_max, hit_record& rec) const {
     vec3 oc = r.origin() - centre;
     auto a = r.direction().length_squared();
     auto half_b = dot(oc, r.direction());

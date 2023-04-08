@@ -5,7 +5,7 @@ void HittableList::Add(std::shared_ptr<Hittable> object) { objects.push_back(obj
 
 void HittableList::Clear() { objects.clear(); }
 
-bool HittableList::Hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
+bool HittableList::Hit(const Ray& r, float t_min, float t_max, hit_record& rec) const {
     hit_record temp_rec;
     bool hit_anything = false;
     auto closest_so_far = t_max;

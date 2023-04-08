@@ -2,12 +2,13 @@
 #include <iostream>
 #include <sstream>
 
+#include "Camera.hpp"
 #include "HittableList.hpp"
 #include "color.hpp"
 #include "common.hpp"
 #include "sphere.hpp"
 
-float hit_sphere(const point3& centre, float radius, const ray& r) {
+float hit_sphere(const point3& centre, float radius, const Ray& r) {
     vec3 oc = r.origin() - centre;
     auto a = r.direction().length_squared();
     auto half_b = dot(oc, r.direction());
@@ -21,7 +22,7 @@ float hit_sphere(const point3& centre, float radius, const ray& r) {
     }
 }
 
-color ray_color(const ray& r, const Hittable& world) {
+color ray_color(const Ray& r, const Hittable& world) {
     hit_record rec;
     if (world.Hit(r, 0, INFIN, rec)) {
         return 0.5 * (rec.normal + color(1, 1, 1));
@@ -33,9 +34,10 @@ color ray_color(const ray& r, const Hittable& world) {
 
 int main() {
     // Image
-    const float aspect_ratio = 16.0f / 9.0f;
+    const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
+    const int samples_per_pixel = 100;
 
     std::ofstream file("images/image.ppm");
     std::stringstream ss;
@@ -46,14 +48,7 @@ int main() {
     world.Add(std::make_shared<Sphere>(point3(0, -100.5, -1), 100));
 
     // Camera
-    float viewport_height = 2.0f;
-    float viewport_width = aspect_ratio * viewport_height;
-    float focal_length = 1.0f;
-
-    auto origin = point3(0, 0, 0);
-    auto horizontal = vec3(viewport_width, 0, 0);
-    auto vertical = vec3(0, viewport_height, 0);
-    auto lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
+    Camera cam;
 
     // Render
     file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -61,14 +56,16 @@ int main() {
     for (int j = image_height - 1; j >= 0; --j) {
         std::cout << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
-            auto u = float(i) / (image_width - 1);
-            auto v = float(j) / (image_height - 1);
+            color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; s++) {
+                auto u = (i + randomFloat()) / (image_width - 1);
+                auto v = (j + randomFloat()) / (image_height - 1);
 
-            ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+                Ray r = cam.getRay(u, v);
+                pixel_color += ray_color(r, world);
+            }
 
-            color pixel_color = ray_color(r, world);
-
-            write_color(ss, pixel_color);
+            write_color(ss, pixel_color, samples_per_pixel);
         }
     }
 

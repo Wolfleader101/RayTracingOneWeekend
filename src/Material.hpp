@@ -50,12 +50,29 @@ class Dielectric : public Material {
         attenuation = color(1.0f, 1.0f, 1.0f);
         float refraction_ratio = rec.front_face ? (1.0f / ir) : ir;
         vec3 unit_dir = unit_vector(r_in.direction());
-        vec3 refraction = refract(unit_dir, rec.normal, refraction_ratio);
 
-        scattered = Ray(rec.p, refraction);
+        float cos_theta = fmin(dot(-unit_dir, rec.normal), 1.0f);
+        float sine_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+
+        bool cannot_refract = refraction_ratio * sine_theta > 1.0f;
+        vec3 direction;
+        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > randomFloat()) {
+            direction = reflect(unit_dir, rec.normal);
+        } else {
+            direction = refract(unit_dir, rec.normal, refraction_ratio);
+        }
+
+        scattered = Ray(rec.p, direction);
         return true;
     }
 
    private:
     float ir;
+
+    static float reflectance(float cosine, float ref_idx) {
+        // schlicks approximation for reflectance
+        auto r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * std::pow((1 - cosine), 5);
+    }
 };

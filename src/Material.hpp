@@ -41,3 +41,21 @@ class Metal : public Material {
     color albedo;
     float fuzziness;
 };
+
+class Dielectric : public Material {
+   public:
+    Dielectric(float index_of_refraction) : ir(index_of_refraction) {}
+
+    virtual bool Scatter(const Ray& r_in, const hit_record& rec, color& attenuation, Ray& scattered) const override {
+        attenuation = color(1.0f, 1.0f, 1.0f);
+        float refraction_ratio = rec.front_face ? (1.0f / ir) : ir;
+        vec3 unit_dir = unit_vector(r_in.direction());
+        vec3 refraction = refract(unit_dir, rec.normal, refraction_ratio);
+
+        scattered = Ray(rec.p, refraction);
+        return true;
+    }
+
+   private:
+    float ir;
+};

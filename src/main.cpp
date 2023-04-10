@@ -58,8 +58,8 @@ int main() {
     HittableList world;
     auto material_ground = std::make_shared<Diffuse>(color(0.8f, 0.8f, 0.0f));
     auto material_center = std::make_shared<Diffuse>(color(0.7f, 0.3f, 0.3f));
-    auto material_left = std::make_shared<Metal>(color(0.8f, 0.8f, 0.8f));
-    auto material_right = std ::make_shared<Metal>(color(0.8f, 0.6f, 0.2f));
+    auto material_left = std::make_shared<Metal>(color(0.8f, 0.8f, 0.8f), 0.3f);
+    auto material_right = std ::make_shared<Metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
 
     world.Add(std ::make_shared<Sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground));
     world.Add(std ::make_shared<Sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));

@@ -28,15 +28,16 @@ class Diffuse : public Material {
 
 class Metal : public Material {
    public:
-    Metal(const color& a) : albedo(a){};
+    Metal(const color& a, float fuzz) : albedo(a), fuzziness(fuzz < 1 ? fuzz : 1){};
 
     virtual bool Scatter(const Ray& r_in, const hit_record& rec, color& attenuation, Ray& scattered) const override {
         vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        scattered = Ray(rec.p, reflected);
+        scattered = Ray(rec.p, reflected + fuzziness * random_in_unit_sphere());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 
    private:
     color albedo;
+    float fuzziness;
 };

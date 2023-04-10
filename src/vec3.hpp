@@ -2,6 +2,10 @@
 #include <cmath>
 #include <iostream>
 
+#include "common.hpp"
+inline float randomFloat();
+float randomFloat(float min, float max);
+
 class vec3 {
    public:
     vec3() : data{0, 0, 0} {}
@@ -35,6 +39,11 @@ class vec3 {
 
     float length_squared() const { return data[0] * data[0] + data[1] * data[1] + data[2] * data[2]; }
 
+    inline static vec3 random() { return vec3(randomFloat(), randomFloat(), randomFloat()); }
+    inline static vec3 random(float min, float max) {
+        return vec3(randomFloat(min, max), randomFloat(min, max), randomFloat(min, max));
+    }
+
    private:
     float data[3];
 };
@@ -65,3 +74,21 @@ inline vec3 cross(const vec3& u, const vec3& v) {
 }
 
 inline vec3 unit_vector(vec3 v) { return v / v.length(); }
+
+inline vec3 random_in_unit_sphere() {
+    while (true) {
+        auto p = vec3::random(-1, 1);
+        if (p.length_squared() >= 1) continue;
+        return p;
+    }
+}
+
+inline vec3 random_unit_vector() { return unit_vector(random_in_unit_sphere()); }
+
+inline vec3 random_in_hemisphere(const vec3& normal) {
+    vec3 in_unit_sphere = random_in_unit_sphere();
+    if (dot(in_unit_sphere, normal) > 0.0f)
+        return in_unit_sphere;
+    else
+        return -in_unit_sphere;
+}

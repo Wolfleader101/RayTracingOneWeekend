@@ -18,6 +18,12 @@ inline float randomFloat() {
     return distrubtion(gen);
 }
 
+inline float randomFloat(float min, float max) {
+    static std::uniform_real_distribution<float> distrubtion(min, max);
+    static std::mt19937 gen;
+    return distrubtion(gen);
+}
+
 inline float clamp(float x, float min, float max) {
     if (x < min) return min;
     if (x > max) return max;

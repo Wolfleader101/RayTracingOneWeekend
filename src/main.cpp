@@ -22,10 +22,16 @@ float hit_sphere(const point3& centre, float radius, const Ray& r) {
     }
 }
 
-color ray_color(const Ray& r, const Hittable& world) {
+color ray_color(const Ray& r, const Hittable& world, int depth) {
     hit_record rec;
-    if (world.Hit(r, 0, INFIN, rec)) {
-        return 0.5 * (rec.normal + color(1, 1, 1));
+    if (depth <= 0) {
+        return color(0, 0, 0);
+    }
+
+    if (world.Hit(r, 0.001f, INFIN, rec)) {
+        point3 target = rec.p + rec.normal + random_unit_vector();
+        // point3 target = rec.p + random_in_hemisphere(rec.normal);
+        return 0.5f * ray_color(Ray(rec.p, target - rec.p), world, depth - 1);
     }
     vec3 unit_direction = unit_vector(r.direction());
     auto t = 0.5f * (unit_direction.y() + 1.0f);
@@ -38,6 +44,7 @@ int main() {
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 100;
+    const int max_depth = 50;
 
     std::ofstream file("images/image.ppm");
     std::stringstream ss;
@@ -54,7 +61,7 @@ int main() {
     file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
     for (int j = image_height - 1; j >= 0; --j) {
-        std::cout << "\rScanlines remaining: " << j << ' ' << std::flush;
+        std::cout << "\rRows remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
             color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; s++) {
@@ -62,7 +69,7 @@ int main() {
                 auto v = (j + randomFloat()) / (image_height - 1);
 
                 Ray r = cam.getRay(u, v);
-                pixel_color += ray_color(r, world);
+                pixel_color += ray_color(r, world, max_depth);
             }
 
             write_color(ss, pixel_color, samples_per_pixel);

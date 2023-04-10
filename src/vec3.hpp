@@ -39,6 +39,11 @@ class vec3 {
 
     float length_squared() const { return data[0] * data[0] + data[1] * data[1] + data[2] * data[2]; }
 
+    bool near_zero() const {
+        const auto s = 1e-8;
+        return (fabs(data[0]) < s) && (fabs(data[1]) < s) && (fabs(data[2]) < s);
+    }
+
     inline static vec3 random() { return vec3(randomFloat(), randomFloat(), randomFloat()); }
     inline static vec3 random(float min, float max) {
         return vec3(randomFloat(min, max), randomFloat(min, max), randomFloat(min, max));
@@ -92,3 +97,5 @@ inline vec3 random_in_hemisphere(const vec3& normal) {
     else
         return -in_unit_sphere;
 }
+
+inline vec3 reflect(const vec3& v, const vec3& n) { return v - 2 * dot(v, n) * n; }

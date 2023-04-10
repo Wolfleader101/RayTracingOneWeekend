@@ -13,4 +13,6 @@ src/HittableList.cpp
 
 src/Camera.hpp
 src/Camera.cpp
+
+src/Material.hpp
 PARENT_SCOPE)

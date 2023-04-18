@@ -45,7 +45,7 @@ color ray_color(const Ray& r, const Hittable& world, int depth) {
 
 int main() {
     // Image
-    const auto aspect_ratio = 16.0 / 9.0;
+    const auto aspect_ratio = 16.0f / 9.0f;
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 100;
@@ -69,7 +69,7 @@ int main() {
     world.Add(std ::make_shared<Sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
 
     // Camera
-    Camera cam;
+    Camera cam(point3(0, 2, 1), point3(0, 0, -1), vec3(0, 1, 0), 90, aspect_ratio);
 
     // Render
     file << "P3\n" << image_width << ' ' << image_height << "\n255\n";

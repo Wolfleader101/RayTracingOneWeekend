@@ -9,20 +9,6 @@
 #include "color.hpp"
 #include "common.hpp"
 
-float hit_Sphere(const point3& centre, float radius, const Ray& r) {
-    vec3 oc = r.origin() - centre;
-    auto a = r.direction().length_squared();
-    auto half_b = dot(oc, r.direction());
-    auto c = oc.length_squared() - radius * radius;
-    auto discrim = half_b * half_b - a * c;
-
-    if (discrim < 0) {
-        return -1.0f;
-    } else {
-        return (-half_b - std::sqrt(discrim)) / a;
-    }
-}
-
 color ray_color(const Ray& r, const Hittable& world, int depth) {
     hit_record rec;
     if (depth <= 0) {
@@ -39,7 +25,7 @@ color ray_color(const Ray& r, const Hittable& world, int depth) {
         return color(0, 0, 0);
     }
     vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5f * (unit_direction.y() + 1.0f);
+    auto t = 0.5f * (unit_direction.y + 1.0f);
     return (1.0f - t) * color(1.0f, 1.0f, 1.0f) + t * color(0.5f, 0.7f, 1.0f);
 }
 
@@ -61,17 +47,17 @@ HittableList random_scene() {
                     // diffuse
                     auto albedo = color::random() * color::random();
                     Sphere_material = std::make_shared<Diffuse>(albedo);
-                    world.Add(std::make_shared<Sphere>(center, 0.2, Sphere_material));
+                    world.Add(std::make_shared<Sphere>(center, 0.2f, Sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = color::random(0.5, 1);
                     auto fuzz = randomFloat(0, 0.5);
                     Sphere_material = std::make_shared<Metal>(albedo, fuzz);
-                    world.Add(std::make_shared<Sphere>(center, 0.2, Sphere_material));
+                    world.Add(std::make_shared<Sphere>(center, 0.2f, Sphere_material));
                 } else {
                     // glass
                     Sphere_material = std::make_shared<Dielectric>(1.5);
-                    world.Add(std::make_shared<Sphere>(center, 0.2, Sphere_material));
+                    world.Add(std::make_shared<Sphere>(center, 0.2f, Sphere_material));
                 }
             }
         }
@@ -94,27 +80,27 @@ int main() {
     const auto aspect_ratio = 3.f / 2.f;
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 250;
+    const int samples_per_pixel = 100;
     const int max_depth = 50;
 
     std::ofstream file("images/image.ppm");
     std::stringstream ss;
 
     // World
-    // auto world = random_scene();
-    HittableList world;
-    auto material_ground = std::make_shared<Diffuse>(color(0.8f, 0.8f, 0.0f));
-    auto material_center = std::make_shared<Diffuse>(color(0.7f, 0.3f, 0.3f));
-    auto material_right = std ::make_shared<Metal>(color(0.8f, 0.6f, 0.2f), 0.0f);
+    auto world = random_scene();
+    // HittableList world;
+    // auto material_ground = std::make_shared<Diffuse>(color(0.8f, 0.8f, 0.0f));
+    // auto material_center = std::make_shared<Diffuse>(color(0.7f, 0.3f, 0.3f));
+    // auto material_right = std ::make_shared<Metal>(color(0.8f, 0.6f, 0.2f), 0.0f);
 
-    world.Add(std ::make_shared<Sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground));
-    world.Add(std ::make_shared<Sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));
-    world.Add(std ::make_shared<Sphere>(point3(-1.0f, 0.0f, -1.0f), -0.4f, material_center));
-    world.Add(std ::make_shared<Sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
+    // world.Add(std ::make_shared<Sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground));
+    // world.Add(std ::make_shared<Sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));
+    // world.Add(std ::make_shared<Sphere>(point3(-1.0f, 0.0f, -1.0f), -0.4f, material_center));
+    // world.Add(std ::make_shared<Sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
 
     // Camera
-    point3 lookfrom(5, 2, 1);
-    point3 lookat(0, 0, -1);
+    point3 lookfrom(13, 2, 3);
+    point3 lookat(0, 0, 0);
     vec3 vup(0, 1, 0);
     float dist_to_focus = 10.0;
     float aperature = 0.1f;

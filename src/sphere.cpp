@@ -3,12 +3,11 @@
 Sphere::Sphere(point3 cen, float r, std::shared_ptr<Material> mat) : centre(cen), radius(r), mat_ptr(mat) {}
 
 bool Sphere::Hit(const Ray& r, float t_min, float t_max, hit_record& rec) const {
-    auto& dir = r.direction();
     vec3 oc = r.origin() - centre;
-    float a = dir.length_squared();
-    float half_b = dot(oc, dir);
-    float c = oc.length_squared() - radius * radius;
-    float discrim = half_b * half_b - a * c;
+    auto a = r.direction().length_squared();
+    auto half_b = dot(oc, r.direction());
+    auto c = oc.length_squared() - radius * radius;
+    auto discrim = half_b * half_b - a * c;
 
     if (discrim < 0) {
         return false;

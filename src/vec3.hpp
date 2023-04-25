@@ -98,6 +98,14 @@ inline vec3 random_in_hemisphere(const vec3& normal) {
         return -in_unit_sphere;
 }
 
+inline vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(randomFloat(-1, 1), randomFloat(-1, 1), 0);
+        if (p.length_squared() >= 1) continue;
+        return p;
+    }
+}
+
 inline vec3 reflect(const vec3& v, const vec3& n) { return v - 2 * dot(v, n) * n; }
 
 inline vec3 refract(const vec3& uv, const vec3& n, float refraction_ratio) {

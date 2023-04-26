@@ -1,3 +1,4 @@
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -92,7 +93,7 @@ HittableList random_scene() {
 int main() {
     // Image
     const auto aspect_ratio = 3.f / 2.f;
-    const int image_width = 800;
+    const int image_width = 100;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 250;
     const int max_depth = 50;
@@ -121,6 +122,8 @@ int main() {
 
     Camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperature, dist_to_focus);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     // Render
     file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
@@ -142,5 +145,9 @@ int main() {
 
     file << ss.str();
     file.close();
-    std::cout << std::endl << "Done!" << std::endl;
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+
+    std::cout << std::endl << "Done in " << duration << "s" << std::endl;
 }

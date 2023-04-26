@@ -80,11 +80,11 @@ HittableList random_scene() {
 
     return world;
 }
-
 void RenderPartial(int row_start, int row_end, int width, int height, int samples_per_pixel, int max_depth,
-                   const Camera& cam, const Hittable& world, std::atomic<int>& completed_pixels, std::stringstream& ss,
-                   std::mutex& ss_mutex) {
+                   const Camera& cam, const Hittable& world, std::atomic<int>& completed_pixels,
+                   std::vector<std::string>& output, std::mutex& cout_mutex) {
     for (int y = row_start; y < row_end; y++) {
+        std::stringstream row_ss;
         for (int x = 0; x < width; x++) {
             color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; s++) {
@@ -95,23 +95,27 @@ void RenderPartial(int row_start, int row_end, int width, int height, int sample
                 pixel_color += ray_color(r, world, max_depth);
             }
 
-            std::unique_lock<std::mutex> lock(ss_mutex);
-            write_color(ss, pixel_color, samples_per_pixel);
-            lock.unlock();
-
+            write_color(row_ss, pixel_color, samples_per_pixel);
             completed_pixels++;
         }
+        output[height - y - 1] = row_ss.str();  // Store the row data in reverse order
+
+        double percentage = static_cast<double>(completed_pixels) / (width * height) * 100.0;
+        std::unique_lock<std::mutex> lock(cout_mutex);
+        std::cout << "\rRendering progress: " << std::fixed << std::setprecision(2) << percentage << "%";
+        std::cout.flush();
+        lock.unlock();
     }
 }
 
-void RenderMultiThreaded(int width, int height, int num_threads, int samples_per_pixel, int max_depth,
+void RenderMultiThreaded(int num_threads, int width, int height, int samples_per_pixel, int max_depth,
                          const Camera& cam, const Hittable& world, std::stringstream& ss) {
     std::atomic<int> completed_pixels(0);
     std::mutex cout_mutex;
-    std::mutex ss_mutex;
 
     std::vector<std::thread> threads;
     int rows_per_thread = height / num_threads;
+    std::vector<std::string> output(height);
 
     ss << "P3\n" << width << ' ' << height << "\n255\n";
 
@@ -124,29 +128,22 @@ void RenderMultiThreaded(int width, int height, int num_threads, int samples_per
         }
 
         threads.push_back(std::thread(RenderPartial, row_start, row_end, width, height, samples_per_pixel, max_depth,
-                                      std::ref(cam), std::ref(world), std::ref(completed_pixels), std::ref(ss),
-                                      std::ref(ss_mutex)));
+                                      std::ref(cam), std::ref(world), std::ref(completed_pixels), std::ref(output),
+                                      std::ref(cout_mutex)));
     }
 
-    while (completed_pixels < width * height) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Sleep for 100ms to avoid excessive CPU usage
-
-        // Lock the mutex and update the progress.
-        std::unique_lock<std::mutex> lock(cout_mutex);
-        double percentage = static_cast<double>(completed_pixels) / (width * height) * 100.0;
-        std::cout << "\rRendering progress: " << std::fixed << std::setprecision(2) << percentage << "%";
-        std::cout.flush();
-        lock.unlock();
-    }
-
-    // Join the threads once they have finished rendering.
+    // Wait for threads to finish and join them
     for (auto& thread : threads) {
         thread.join();
     }
 
+    // Combine the row data into the final output
+    for (const auto& row : output) {
+        ss << row;
+    }
+
     std::cout << std::endl;
 }
-
 void RenderSingleThreaded(int width, int height, int samples_per_pixel, int max_depth, const Camera& cam,
                           const Hittable& world, std::stringstream& ss) {
     int completed_pixels = 0;
@@ -175,9 +172,9 @@ void RenderSingleThreaded(int width, int height, int samples_per_pixel, int max_
 int main() {
     // Image
     const auto aspect_ratio = 16.0f / 9.0f;
-    const int image_width = 200;
+    const int image_width = 1200;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 50;
+    const int samples_per_pixel = 100;
     const int max_depth = 50;
 
     std::ofstream file("images/image.ppm");
@@ -200,8 +197,8 @@ int main() {
     // Render
     std::cout << "Starting Render" << std::endl;
     int num_threads = std::thread::hardware_concurrency();
-    // RenderMultiThreaded(image_width, image_height, num_threads, samples_per_pixel, max_depth, cam, world, ss);
-    RenderSingleThreaded(image_width, image_height, samples_per_pixel, max_depth, cam, world, ss);
+    RenderMultiThreaded(num_threads, image_width, image_height, samples_per_pixel, max_depth, cam, world, ss);
+    // RenderSingleThreaded(image_width, image_height, samples_per_pixel, max_depth, cam, world, ss);
 
     file << ss.str();
     file.close();

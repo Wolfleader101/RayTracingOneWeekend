@@ -92,30 +92,21 @@ HittableList random_scene() {
 
 int main() {
     // Image
-    const auto aspect_ratio = 3.f / 2.f;
-    const int image_width = 100;
+    const auto aspect_ratio = 16.0f / 9.0f;
+    const int image_width = 1200;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 250;
+    const int samples_per_pixel = 10;
     const int max_depth = 50;
 
     std::ofstream file("images/image.ppm");
     std::stringstream ss;
 
     // World
-    // auto world = random_scene();
-    HittableList world;
-    auto material_ground = std::make_shared<Diffuse>(color(0.8f, 0.8f, 0.0f));
-    auto material_center = std::make_shared<Diffuse>(color(0.7f, 0.3f, 0.3f));
-    auto material_right = std ::make_shared<Metal>(color(0.8f, 0.6f, 0.2f), 0.0f);
-
-    world.Add(std ::make_shared<Sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground));
-    world.Add(std ::make_shared<Sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));
-    world.Add(std ::make_shared<Sphere>(point3(-1.0f, 0.0f, -1.0f), -0.4f, material_center));
-    world.Add(std ::make_shared<Sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
+    auto world = random_scene();
 
     // Camera
-    point3 lookfrom(5, 2, 1);
-    point3 lookat(0, 0, -1);
+    point3 lookfrom(13, 2, 3);
+    point3 lookat(0, 0, 0);
     vec3 vup(0, 1, 0);
     float dist_to_focus = 10.0;
     float aperature = 0.1f;

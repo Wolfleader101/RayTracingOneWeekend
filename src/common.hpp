@@ -14,14 +14,14 @@ const double PI = 3.1415926535897932385;
 inline float degreesToRadians(float degrees) { return degrees * (float)PI / 180.0f; }
 
 inline float randomFloat() {
-    static std::uniform_real_distribution<float> distrubtion(0.0f, 1.0f);
-    static std::mt19937 gen;
+    static thread_local std::uniform_real_distribution<float> distrubtion(0.0f, 1.0f);
+    static thread_local std::mt19937 gen;
     return distrubtion(gen);
 }
 
 inline float randomFloat(float min, float max) {
-    static std::uniform_real_distribution<float> distrubtion(min, max);
-    static std::mt19937 gen;
+    static thread_local std::uniform_real_distribution<float> distrubtion(min, max);
+    static thread_local std::mt19937 gen;
     return distrubtion(gen);
 }
 

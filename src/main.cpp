@@ -1,7 +1,12 @@
+#include <atomic>
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <sstream>
+#include <thread>
+#include <vector>
 
 #include "Camera.hpp"
 #include "HittableList.hpp"
@@ -9,20 +14,6 @@
 #include "Sphere.hpp"
 #include "color.hpp"
 #include "common.hpp"
-
-float hit_Sphere(const point3& centre, float radius, const Ray& r) {
-    vec3 oc = r.origin() - centre;
-    auto a = r.direction().length_squared();
-    auto half_b = dot(oc, r.direction());
-    auto c = oc.length_squared() - radius * radius;
-    auto discrim = half_b * half_b - a * c;
-
-    if (discrim < 0) {
-        return -1.0f;
-    } else {
-        return (-half_b - std::sqrt(discrim)) / a;
-    }
-}
 
 color ray_color(const Ray& r, const Hittable& world, int depth) {
     hit_record rec;
@@ -90,12 +81,103 @@ HittableList random_scene() {
     return world;
 }
 
+void RenderPartial(int row_start, int row_end, int width, int height, int samples_per_pixel, int max_depth,
+                   const Camera& cam, const Hittable& world, std::atomic<int>& completed_pixels, std::stringstream& ss,
+                   std::mutex& ss_mutex) {
+    for (int y = row_start; y < row_end; y++) {
+        for (int x = 0; x < width; x++) {
+            color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; s++) {
+                auto u = (x + randomFloat()) / (width - 1);
+                auto v = (y + randomFloat()) / (height - 1);
+
+                Ray r = cam.getRay(u, v);
+                pixel_color += ray_color(r, world, max_depth);
+            }
+
+            std::unique_lock<std::mutex> lock(ss_mutex);
+            write_color(ss, pixel_color, samples_per_pixel);
+            lock.unlock();
+
+            completed_pixels++;
+        }
+    }
+}
+
+void RenderMultiThreaded(int width, int height, int num_threads, int samples_per_pixel, int max_depth,
+                         const Camera& cam, const Hittable& world, std::stringstream& ss) {
+    std::atomic<int> completed_pixels(0);
+    std::mutex cout_mutex;
+    std::mutex ss_mutex;
+
+    std::vector<std::thread> threads;
+    int rows_per_thread = height / num_threads;
+
+    ss << "P3\n" << width << ' ' << height << "\n255\n";
+
+    for (int i = 0; i < num_threads; i++) {
+        int row_start = i * rows_per_thread;
+        int row_end = (i + 1) * rows_per_thread;
+
+        if (i == num_threads - 1) {
+            row_end = height;
+        }
+
+        threads.push_back(std::thread(RenderPartial, row_start, row_end, width, height, samples_per_pixel, max_depth,
+                                      std::ref(cam), std::ref(world), std::ref(completed_pixels), std::ref(ss),
+                                      std::ref(ss_mutex)));
+    }
+
+    while (completed_pixels < width * height) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Sleep for 100ms to avoid excessive CPU usage
+
+        // Lock the mutex and update the progress.
+        std::unique_lock<std::mutex> lock(cout_mutex);
+        double percentage = static_cast<double>(completed_pixels) / (width * height) * 100.0;
+        std::cout << "\rRendering progress: " << std::fixed << std::setprecision(2) << percentage << "%";
+        std::cout.flush();
+        lock.unlock();
+    }
+
+    // Join the threads once they have finished rendering.
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    std::cout << std::endl;
+}
+
+void RenderSingleThreaded(int width, int height, int samples_per_pixel, int max_depth, const Camera& cam,
+                          const Hittable& world, std::stringstream& ss) {
+    int completed_pixels = 0;
+    ss << "P3\n" << width << ' ' << height << "\n255\n";
+
+    for (int j = height - 1; j >= 0; --j) {
+        for (int i = 0; i < width; ++i) {
+            color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; s++) {
+                auto u = (i + randomFloat()) / (width - 1);
+                auto v = (j + randomFloat()) / (height - 1);
+
+                Ray r = cam.getRay(u, v);
+                pixel_color += ray_color(r, world, max_depth);
+            }
+
+            write_color(ss, pixel_color, samples_per_pixel);
+            completed_pixels++;
+        }
+
+        double percentage = static_cast<double>(completed_pixels) / (width * height) * 100.0;
+        std::cout << "\rRendering progress: " << std::fixed << std::setprecision(2) << percentage << "%";
+        std::cout.flush();
+    }
+}
 int main() {
     // Image
     const auto aspect_ratio = 16.0f / 9.0f;
-    const int image_width = 1200;
+    const int image_width = 200;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 10;
+    const int samples_per_pixel = 50;
     const int max_depth = 50;
 
     std::ofstream file("images/image.ppm");
@@ -116,23 +198,10 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
     // Render
-    file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cout << "\rRows remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; s++) {
-                auto u = (i + randomFloat()) / (image_width - 1);
-                auto v = (j + randomFloat()) / (image_height - 1);
-
-                Ray r = cam.getRay(u, v);
-                pixel_color += ray_color(r, world, max_depth);
-            }
-
-            write_color(ss, pixel_color, samples_per_pixel);
-        }
-    }
+    std::cout << "Starting Render" << std::endl;
+    int num_threads = std::thread::hardware_concurrency();
+    // RenderMultiThreaded(image_width, image_height, num_threads, samples_per_pixel, max_depth, cam, world, ss);
+    RenderSingleThreaded(image_width, image_height, samples_per_pixel, max_depth, cam, world, ss);
 
     file << ss.str();
     file.close();

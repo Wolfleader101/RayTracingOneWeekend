@@ -31,7 +31,7 @@ color ray_color(const Ray& r, const Hittable& world, int depth) {
         return color(0, 0, 0);
     }
     vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5f * (unit_direction.y() + 1.0f);
+    auto t = 0.5f * (unit_direction.y + 1.0f);
     return (1.0f - t) * color(1.0f, 1.0f, 1.0f) + t * color(0.5f, 0.7f, 1.0f);
 }
 
@@ -51,12 +51,12 @@ HittableList random_scene() {
 
                 if (choose_mat < 0.8) {
                     // diffuse
-                    auto albedo = color::random() * color::random();
+                    auto albedo = randomVec() * randomVec();
                     Sphere_material = std::make_shared<Diffuse>(albedo);
                     world.Add(std::make_shared<Sphere>(center, 0.2, Sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
-                    auto albedo = color::random(0.5, 1);
+                    auto albedo = randomVec(0.5, 1);
                     auto fuzz = randomFloat(0, 0.5);
                     Sphere_material = std::make_shared<Metal>(albedo, fuzz);
                     world.Add(std::make_shared<Sphere>(center, 0.2, Sphere_material));
@@ -172,7 +172,7 @@ void RenderSingleThreaded(int width, int height, int samples_per_pixel, int max_
 int main() {
     // Image
     const auto aspect_ratio = 16.0f / 9.0f;
-    const int image_width = 1200;
+    const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 100;
     const int max_depth = 50;

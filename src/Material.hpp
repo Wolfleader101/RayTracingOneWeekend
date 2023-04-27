@@ -15,7 +15,7 @@ class Diffuse : public Material {
     virtual bool Scatter(const Ray& r_in, const hit_record& rec, color& attenuation, Ray& scattered) const override {
         auto scatter_direction = rec.normal + random_unit_vector();
 
-        if (scatter_direction.near_zero()) scatter_direction = rec.normal;
+        if (near_zero(scatter_direction)) scatter_direction = rec.normal;
 
         scattered = Ray(rec.p, scatter_direction);
         attenuation = albedo;

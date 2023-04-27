@@ -20,7 +20,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 add_subdirectory(lib)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC )
+target_link_libraries(${PROJECT_NAME} PUBLIC glm)
 
 
  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
